@@ -3,93 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android Camera, Mic & Location Access</title>
+    <title>Device Access Demo</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
-        video, audio {
-            margin: 20px 0;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { margin-bottom: 20px; }
+        video, audio { width: 100%; max-width: 600px; }
+        .info { color: green; }
+        .error { color: red; }
     </style>
 </head>
 <body>
-    <h1>Access Camera, Microphone, and Location</h1>
 
-    <button id="getCamera">Access Camera</button>
-    <button id="getMic">Access Microphone</button>
-    <button id="getLocation">Get Location</button>
+    <h1>Device Access Demo</h1>
 
-    <br><br>
+    <!-- Camera Section -->
+    <div class="container">
+        <h2>Camera Access</h2>
+        <video id="camera" autoplay></video>
+        <p id="cameraStatus"></p>
+    </div>
 
-    <!-- Video stream from the camera -->
-    <video id="cameraStream" width="320" height="240" autoplay></video>
+    <!-- Microphone Section -->
+    <div class="container">
+        <h2>Microphone Access</h2>
+        <audio id="microphone" controls></audio>
+        <p id="micStatus"></p>
+    </div>
 
-    <!-- Audio stream -->
-    <audio id="audioStream" controls></audio>
+    <!-- Location Section -->
+    <div class="container">
+        <h2>Location Access</h2>
+        <button id="getLocationBtn">Get Location</button>
+        <p id="locationStatus"></p>
+    </div>
 
-    <!-- Location display -->
-    <p id="locationDisplay"></p>
-
-    <script>
-        // Access the camera
-        document.getElementById('getCamera').addEventListener('click', async function() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('cameraStream').srcObject = stream;
-            } catch (error) {
-                alert('Error accessing camera: ' + error.message);
-            }
-        });
-
-        // Access the microphone
-        document.getElementById('getMic').addEventListener('click', async function() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                document.getElementById('audioStream').srcObject = stream;
-            } catch (error) {
-                alert('Error accessing microphone: ' + error.message);
-            }
-        });
-
-        // Get location
-        document.getElementById('getLocation').addEventListener('click', function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                alert('Geolocation is not supported by this browser.');
-            }
-        });
-
-        function showPosition(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            document.getElementById('locationDisplay').innerHTML = 
-                Latitude: ${latitude} <br> Longitude: ${longitude};
-        }
-
-        function showError(error) {
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    alert('User denied the request for Geolocation.');
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert('Location information is unavailable.');
-                    break;
-                case error.TIMEOUT:
-                    alert('The request to get user location timed out.');
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert('An unknown error occurred.');
-                    break;
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
