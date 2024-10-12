@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Info</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .info { margin-bottom: 10px; }
+        .info span { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Collected Device Information</h1>
+
+    <div class="info">
+        <span>Camera Access:</span> <span id="cameraStatus"></span>
+    </div>
+    <div class="info">
+        <span>Microphone Access:</span> <span id="micStatus"></span>
+    </div>
+    <div class="info">
+        <span>Location:</span> <span id="locationStatus"></span>
+    </div>
+
+    <script>
+        // Parse the URL parameters to get the data
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasCamera = urlParams.get('camera') === 'true';
+        const hasMic = urlParams.get('microphone') === 'true';
+        const latitude = urlParams.get('latitude');
+        const longitude = urlParams.get('longitude');
+        const locationError = urlParams.get('locationError');
+
+        // Display camera access status
+        document.getElementById('cameraStatus').textContent = hasCamera ? 'Granted' : 'Denied';
+
+        // Display microphone access status
+        document.getElementById('micStatus').textContent = hasMic ? 'Granted' : 'Denied';
+
+        // Display location status
+        if (latitude && longitude) {
+            document.getElementById('locationStatus').textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
+        } else if (locationError) {
+            document.getElementById('locationStatus').textContent = locationError;
+        } else {
+            document.getElementById('locationStatus').textContent = 'Location access denied';
+        }
+    </script>
+
+</body>
+</html>
