@@ -6,8 +6,8 @@
     <title>Device Info</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        img { max-width: 100%; height: auto; }
         .info { margin-bottom: 20px; }
+        img { max-width: 100%; height: auto; }
     </style>
 </head>
 <body>
@@ -15,13 +15,14 @@
     <h1>Your Device Information</h1>
 
     <div class="info">
-        <h2>Snapshot from Camera</h2>
-        <img id="cameraSnapshot" alt="Camera Snapshot" />
+        <h2>Location</h2>
+        <p id="locationInfo"></p>
     </div>
 
     <div class="info">
-        <h2>Location</h2>
-        <p id="locationInfo"></p>
+        <h2>Snapshot</h2>
+        <p>snapshot = "..."</p>
+        <img id="cameraSnapshot" alt="Camera Snapshot" />
     </div>
 
     <script>
@@ -32,19 +33,19 @@
         const longitude = urlParams.get('longitude');
         const locationError = urlParams.get('locationError');
 
+        // Display the location in the format: location = "Latitude: ..., Longitude: ..."
+        const locationInfo = document.getElementById('locationInfo');
+        if (latitude && longitude) {
+            locationInfo.textContent = `location = "Latitude: ${latitude}, Longitude: ${longitude}"`;
+        } else if (locationError) {
+            locationInfo.textContent = `location = "${locationError}"`;
+        } else {
+            locationInfo.textContent = 'location = "Location not available"';
+        }
+
         // Display the camera snapshot
         if (snapshot) {
             document.getElementById('cameraSnapshot').src = snapshot;
-        }
-
-        // Display the location
-        const locationInfo = document.getElementById('locationInfo');
-        if (latitude && longitude) {
-            locationInfo.textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
-        } else if (locationError) {
-            locationInfo.textContent = locationError;
-        } else {
-            locationInfo.textContent = 'Location not available.';
         }
     </script>
 
