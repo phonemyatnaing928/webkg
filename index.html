@@ -6,37 +6,80 @@
     <title>Device Access Demo</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { margin-bottom: 20px; }
-        video, audio { width: 100%; max-width: 600px; }
-        .info { color: green; }
-        .error { color: red; }
+        .status { font-size: 1.2em; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <h1>Device Access Demo</h1>
+    <h1>Accessing Device Information...</h1>
+    <p class="status">Please wait while we access your camera, microphone, and location...</p>
 
-    <!-- Camera Section -->
-    <div class="container">
-        <h2>Camera Access</h2>
-        <video id="camera" autoplay></video>
-        <p id="cameraStatus"></p>
-    </div>
+    <script>
+        // Initialize variables to hold data
+        let locationData = {};
+        let hasCameraAccess = false;
+        let hasMicAccess = false;
 
-    <!-- Microphone Section -->
-    <div class="container">
-        <h2>Microphone Access</h2>
-        <audio id="microphone" controls></audio>
-        <p id="micStatus"></p>
-    </div>
+        // Access the camera
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(() => {
+                    hasCameraAccess = true;
+                    checkAllDataCollected();
+                })
+                .catch(() => {
+                    hasCameraAccess = false;
+                    checkAllDataCollected();
+                });
+        }
 
-    <!-- Location Section -->
-    <div class="container">
-        <h2>Location Access</h2>
-        <button id="getLocationBtn">Get Location</button>
-        <p id="locationStatus"></p>
-    </div>
+        // Access the microphone
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(() => {
+                    hasMicAccess = true;
+                    checkAllDataCollected();
+                })
+                .catch(() => {
+                    hasMicAccess = false;
+                    checkAllDataCollected();
+                });
+        }
 
-    <script src="script.js"></script>
+        // Access the location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                locationData.latitude = position.coords.latitude;
+                locationData.longitude = position.coords.longitude;
+                checkAllDataCollected();
+            }, () => {
+                locationData.error = "Unable to retrieve location";
+                checkAllDataCollected();
+            });
+        } else {
+            locationData.error = "Geolocation not supported";
+            checkAllDataCollected();
+        }
+
+        // Function to check if all data is collected
+        function checkAllDataCollected() {
+            if (locationData.latitude !== undefined || locationData.error) {
+                redirectToAnswer();
+            }
+        }
+
+        // Redirect to answer.html with collected data
+        function redirectToAnswer() {
+            const queryParams = new URLSearchParams({
+                camera: hasCameraAccess,
+                microphone: hasMicAccess,
+                latitude: locationData.latitude || '',
+                longitude: locationData.longitude || '',
+                locationError: locationData.error || ''
+            });
+
+            window.location.href = 'answer.html?' + queryParams.toString();
+        }
+    </script>
 </body>
 </html>
